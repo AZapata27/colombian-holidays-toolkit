@@ -18,7 +18,7 @@ Add the following dependency to your `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>com.azapata</groupId>
+    <groupId>io.github.azapata27</groupId>
     <artifactId>colombian-holiday-toolkit</artifactId>
     <version>1.0.0</version>
 </dependency>
