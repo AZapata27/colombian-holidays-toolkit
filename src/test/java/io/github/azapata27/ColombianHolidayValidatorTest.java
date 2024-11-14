@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ColombianHolidayTest {
-    private final HolidayValidator holidayValidator = new ColombianHoliday();
+class ColombianHolidayValidatorTest {
+    private final HolidayValidator holidayValidator = new ColombianHolidayValidator();
 
     @Test
     void shouldIdentifyFixedHolidays() {
@@ -46,7 +46,7 @@ class ColombianHolidayTest {
 
     @Test
     void shouldGetAllHolidaysForYear() {
-        List<LocalDate> holidays2024 = holidayValidator.getHolidaysForYear(Year.of(2024));
+        List<LocalDate> holidays2024 = holidayValidator.getHolidayDatesForYear(Year.of(2024));
         
         // 2024 should have 18 holidays
         assertEquals(18, holidays2024.size(), "Colombia should have 18 holidays in 2024");
@@ -89,9 +89,8 @@ class ColombianHolidayTest {
     
     @Test
     void shouldHandleLeapYears() {
-        // Verificar que el cálculo de festivos funciona correctamente en años bisiestos
-        List<LocalDate> holidays2024 = holidayValidator.getHolidaysForYear(Year.of(2024));
-        List<LocalDate> holidays2025 = holidayValidator.getHolidaysForYear(Year.of(2025));
+        List<LocalDate> holidays2024 = holidayValidator.getHolidayDatesForYear(Year.of(2024));
+        List<LocalDate> holidays2025 = holidayValidator.getHolidayDatesForYear(Year.of(2025));
         
         assertNotEquals(
             holidays2024.stream()
