@@ -17,7 +17,8 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ColombianHolidayValidatorTest {
-    private final HolidayValidator holidayValidator = new ColombianHolidayValidator();
+
+    private final HolidayValidator<ColombianHoliday> holidayValidator = new ColombianHolidayValidator();
 
     @Test
     void shouldIdentifyFixedHolidays() {
@@ -119,34 +120,34 @@ class ColombianHolidayValidatorTest {
 
     @Test
     void shouldReturnCorrectHolidayObjects() {
-        List<Holiday> holidays = holidayValidator.getHolidaysForYear(Year.of(2024));
+        List<ColombianHoliday> holidays = holidayValidator.getHolidaysForYear(Year.of(2024));
 
         assertEquals(18, holidays.size(), "Should return 18 holidays for 2024");
 
         // Verify a fixed holiday
-        Holiday newYear = findHolidayByDate(holidays, LocalDate.of(2024, Month.JANUARY, 1));
+        ColombianHoliday newYear = findHolidayByDate(holidays, LocalDate.of(2024, Month.JANUARY, 1));
         assertNotNull(newYear, "Should contain New Year");
         assertEquals("Año Nuevo", newYear.getName());
-        assertEquals(ColombianHolidayType.FIXED_CIVIL, newYear.getType());
+        assertEquals(ColombianHolidayType.FIXED_CIVIL, newYear.getColombianType());
 
         // Verify an Easter-based holiday
-        Holiday holyThursday = findHolidayByDate(holidays, LocalDate.of(2024, Month.MARCH, 28));
+        ColombianHoliday holyThursday = findHolidayByDate(holidays, LocalDate.of(2024, Month.MARCH, 28));
         assertNotNull(holyThursday, "Should contain Holy Thursday");
         assertEquals("Jueves Santo", holyThursday.getName());
-        assertEquals(ColombianHolidayType.EASTER_BASED_RELIGIOUS, holyThursday.getType());
+        assertEquals(ColombianHolidayType.EASTER_BASED_RELIGIOUS, holyThursday.getColombianType());
 
         // Verify a transferable holiday
-        Holiday epiphany = findHolidayByDate(holidays, LocalDate.of(2024, Month.JANUARY, 8));
+        ColombianHoliday epiphany = findHolidayByDate(holidays, LocalDate.of(2024, Month.JANUARY, 8));
         assertNotNull(epiphany, "Should contain Epiphany");
-        assertEquals("Día de Reyes (Epifanía)", epiphany.getName());
-        assertEquals(ColombianHolidayType.TRANSFERABLE_RELIGIOUS, epiphany.getType());
+        assertEquals("Día de los Reyes Magos", epiphany.getName());
+        assertEquals(ColombianHolidayType.TRANSFERABLE_RELIGIOUS, epiphany.getColombianType());
         assertTrue(epiphany.isTransferable());
     }
 
     @ParameterizedTest
     @MethodSource("provideHolidayDates2024")
     void shouldContainAllHolidaysWithCorrectInfo(Month month, int day, String expectedName) {
-        List<Holiday> holidays = holidayValidator.getHolidaysForYear(Year.of(2024));
+        List<ColombianHoliday> holidays = holidayValidator.getHolidaysForYear(Year.of(2024));
         Holiday holiday = findHolidayByDate(holidays, LocalDate.of(2024, month, day));
 
         assertNotNull(holiday,
@@ -192,7 +193,7 @@ class ColombianHolidayValidatorTest {
     }
 
     // Helper method to find a holiday by date
-    private Holiday findHolidayByDate(List<Holiday> holidays, LocalDate date) {
+    private ColombianHoliday findHolidayByDate(List<ColombianHoliday> holidays, LocalDate date) {
         return holidays.stream()
                 .filter(h -> h.getDate().equals(date))
                 .findFirst()
