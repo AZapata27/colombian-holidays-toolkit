@@ -6,9 +6,9 @@ import java.time.LocalDate;
 import java.time.Year;
 import java.util.List;
 
-public interface HolidayValidator {
+public interface HolidayValidator<T extends Holiday> {
 
     boolean isHoliday(LocalDate date);
     List<LocalDate> getHolidayDatesForYear(Year year);
-    List<Holiday> getHolidaysForYear(Year year);
+    List<T> getHolidaysForYear(Year year);
 }

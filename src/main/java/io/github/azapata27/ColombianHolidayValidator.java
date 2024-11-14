@@ -57,7 +57,7 @@ import java.util.List;
  * @see ColombianHolidayFactory
  * @see EasterCalculator
  */
-public class ColombianHolidayValidator implements HolidayValidator {
+public class ColombianHolidayValidator implements HolidayValidator<ColombianHoliday> {
 
     private final List<ColombianHoliday> fixedHolidays;
     private final List<ColombianHoliday> easterBasedHolidays;
@@ -92,16 +92,17 @@ public class ColombianHolidayValidator implements HolidayValidator {
     }
 
     /**
-     * Gets all Colombian holidays for a specific year.
+     * Gets all Colombian holidays for a specific year as LocalDate objects.
      * Processes each type of holiday according to its rules:
      * <ul>
-     *   <li>Fixed dates remain unchanged</li>
-     *   <li>Easter-based dates are calculated relative to Easter Sunday</li>
+     *   <li>Fixed dates remain unchanged (e.g., January 1st, December 25th)</li>
+     *   <li>Easter-based dates are calculated relative to Easter Sunday (e.g., Holy Thursday -3 days)</li>
      *   <li>Transferable dates are moved to the following Monday</li>
      * </ul>
      *
      * @param year the year to get holidays for
      * @return a list of LocalDate objects representing all holidays in the specified year
+     * @see EasterCalculator#calculateEasterSunday(int)
      */
     @Override
     public List<LocalDate> getHolidayDatesForYear(Year year) {
@@ -125,11 +126,34 @@ public class ColombianHolidayValidator implements HolidayValidator {
         return holidays;
     }
 
-    @Override
-    public List<Holiday> getHolidaysForYear(Year year) {
-        List<Holiday> holidays = new ArrayList<>();
 
-        // Process fixed holidays
+    /**
+     * Gets all Colombian holidays for a specific year with complete holiday information.
+     * Returns a list of Holiday objects containing:
+     * <ul>
+     *   <li>Fixed holidays: New Year, Labor Day, Christmas, etc.</li>
+     *   <li>Easter-based holidays: Holy Thursday, Good Friday</li>
+     *   <li>Easter-based transferable: Ascension Day, Corpus Christi</li>
+     *   <li>Regular transferable: Epiphany, Saint Joseph's Day</li>
+     * </ul>
+     *
+     * <p>Each Holiday object includes:</p>
+     * <ul>
+     *   <li>Holiday name in Spanish</li>
+     *   <li>Type of holiday (FIXED, EASTER_BASED, etc.)</li>
+     *   <li>Final calculated holiday date for the specified year</li>
+     * </ul>
+     *
+     * @param year the year to get holidays for
+     * @return a list of Holiday objects with complete holiday information for the specified year
+     * @see Holiday
+     * @see ColombianHoliday
+     * @see EasterCalculator#calculateEasterSunday(int)
+     */
+    @Override
+    public List<ColombianHoliday> getHolidaysForYear(Year year) {
+        List<ColombianHoliday> holidays = new ArrayList<>();
+
         for (ColombianHoliday holiday : fixedHolidays) {
             LocalDate date = LocalDate.of(year.getValue(), holiday.getMonth(), holiday.getDay());
             holidays.add(new ColombianHoliday.Builder()
@@ -138,7 +162,6 @@ public class ColombianHolidayValidator implements HolidayValidator {
                     .build());
         }
 
-        // Process Easter-based holidays
         LocalDate easterSunday = EasterCalculator.calculateEasterSunday(year.getValue());
         for (ColombianHoliday holiday : easterBasedHolidays) {
             LocalDate baseDate = easterSunday.plusDays(holiday.getEasterOffset());
@@ -151,7 +174,6 @@ public class ColombianHolidayValidator implements HolidayValidator {
                     .build());
         }
 
-        // Process transferable holidays
         for (ColombianHoliday holiday : transferableHolidays) {
             LocalDate baseDate = LocalDate.of(year.getValue(), holiday.getMonth(), holiday.getDay());
             LocalDate finalDate = adjustToNextMonday(baseDate);

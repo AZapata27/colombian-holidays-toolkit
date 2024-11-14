@@ -106,12 +106,4 @@ public enum ColombianHolidayType {
         return isCivil;
     }
 
-    /**
-     * Determines if this holiday type is transferable to Monday.
-     *
-     * @return true if the holiday moves to Monday, false otherwise
-     */
-    public boolean isTransferable() {
-        return getType() == HolidayType.TRANSFERABLE;
-    }
 }

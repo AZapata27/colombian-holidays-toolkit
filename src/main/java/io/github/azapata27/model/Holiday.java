@@ -25,6 +25,10 @@ public abstract class Holiday {
     public HolidayType getType() { return type; }
     public LocalDate getDate() { return date; }
 
+    public boolean isTransferable() {
+        return type == HolidayType.TRANSFERABLE;
+    }
+
     public abstract static class Builder<T extends Builder<T>> {
         private String name;
         private Month month;

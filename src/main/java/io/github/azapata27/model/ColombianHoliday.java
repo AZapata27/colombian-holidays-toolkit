@@ -20,10 +20,6 @@ public class ColombianHoliday extends Holiday {
         return easterOffset;
     }
 
-    public boolean isTransferable() {
-        return colombianType.isTransferable();
-    }
-
     public static class Builder extends Holiday.Builder<Builder> {
         private ColombianHolidayType colombianType;
         private int easterOffset;
@@ -32,6 +28,7 @@ public class ColombianHoliday extends Holiday {
             super.name(holiday.getName());
             super.date(holiday.getMonth(), holiday.getDay());
             super.date(holiday.getDate());
+            super.type(holiday.getType());
             this.colombianType = holiday.getColombianType();
             this.easterOffset = holiday.getEasterOffset();
             return this;
