@@ -1,8 +1,10 @@
 package io.github.azapata27.enums;
 
 public enum ColombianHolidayType {
+
     FIXED(HolidayType.FIXED, "Fixed Holiday"),
     EASTER_BASED(HolidayType.RELATIVE_TO_DATE, "Easter Related Holiday"),
+    EASTER_BASED_TRANSFERABLE(HolidayType.TRANSFERABLE, "Transferable Easter Based Holiday"),
     TRANSFERABLE(HolidayType.TRANSFERABLE, "Transferable Holiday");
 
     private final HolidayType type;
@@ -19,5 +21,9 @@ public enum ColombianHolidayType {
 
     public String getDescription() {
         return description;
+    }
+
+    public boolean isTransferable() {
+        return getType() == HolidayType.TRANSFERABLE;
     }
 }

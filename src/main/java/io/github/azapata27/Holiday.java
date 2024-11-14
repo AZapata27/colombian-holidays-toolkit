@@ -9,8 +9,7 @@ public class Holiday {
     private final Month month;
     private final int day;
     private final ColombianHolidayType type;
-    private final int easterOffset; // Solo para festivos basados en Pascua
-    private final boolean isTransferable;  // nuevo campo
+    private final int easterOffset;
 
     private Holiday(Builder builder) {
         this.name = builder.name;
@@ -18,7 +17,6 @@ public class Holiday {
         this.day = builder.day;
         this.type = builder.type;
         this.easterOffset = builder.easterOffset;
-        this.isTransferable = builder.isTransferable;
     }
 
     public String getName() {
@@ -42,8 +40,9 @@ public class Holiday {
     }
 
     public boolean isTransferable() {
-        return isTransferable;
+        return type.isTransferable();
     }
+
 
     public static class Builder {
         private String name;
@@ -51,7 +50,6 @@ public class Holiday {
         private int day;
         private ColombianHolidayType type;
         private int easterOffset;
-        private boolean isTransferable;
 
         public Builder name(String name) {
             this.name = name;
@@ -71,11 +69,6 @@ public class Holiday {
 
         public Builder easterOffset(int offset) {
             this.easterOffset = offset;
-            return this;
-        }
-
-        public Builder transferable(boolean isTransferable) {
-            this.isTransferable = isTransferable;
             return this;
         }
 

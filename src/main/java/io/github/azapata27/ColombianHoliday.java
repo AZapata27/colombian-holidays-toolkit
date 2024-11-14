@@ -31,19 +31,16 @@ public class ColombianHoliday implements HolidayValidator {
     public List<LocalDate> getHolidaysForYear(Year year) {
         List<LocalDate> holidays = new ArrayList<>();
 
-        // Agregar festivos fijos
         for (Holiday holiday : fixedHolidays) {
             holidays.add(LocalDate.of(year.getValue(), holiday.getMonth(), holiday.getDay()));
         }
 
-        // Agregar festivos basados en Pascua
         LocalDate easterSunday = EasterCalculator.calculateEasterSunday(year.getValue());
         for (Holiday holiday : easterBasedHolidays) {
             LocalDate easterBasedDate = easterSunday.plusDays(holiday.getEasterOffset());
             holidays.add(holiday.isTransferable() ? adjustToNextMonday(easterBasedDate) : easterBasedDate);
         }
 
-        // Agregar festivos trasladables
         for (Holiday holiday : transferableHolidays) {
             LocalDate baseDate = LocalDate.of(year.getValue(), holiday.getMonth(), holiday.getDay());
             holidays.add(adjustToNextMonday(baseDate));
@@ -108,21 +105,18 @@ public class ColombianHoliday implements HolidayValidator {
                         .build(),
                 new Holiday.Builder()
                         .name("Ascensión del Señor")
-                        .type(ColombianHolidayType.EASTER_BASED)
+                        .type(ColombianHolidayType.EASTER_BASED_TRANSFERABLE)
                         .easterOffset(39)
-                        .transferable(true)
                         .build(),
                 new Holiday.Builder()
                         .name("Corpus Christi")
-                        .type(ColombianHolidayType.EASTER_BASED)
+                        .type(ColombianHolidayType.EASTER_BASED_TRANSFERABLE)
                         .easterOffset(60)
-                        .transferable(true)
                         .build(),
                 new Holiday.Builder()
                         .name("Sagrado Corazón")
-                        .type(ColombianHolidayType.EASTER_BASED)
+                        .type(ColombianHolidayType.EASTER_BASED_TRANSFERABLE)
                         .easterOffset(68)
-                        .transferable(true)
                         .build()
         );
     }
