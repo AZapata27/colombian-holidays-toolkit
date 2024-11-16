@@ -8,10 +8,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.Year;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,6 +52,11 @@ class ColombianHolidayValidatorTest {
     }
 
     @Test
+    void shouldThrowExceptionWhenDaysIsHolidays() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.isHoliday(null), "The date must not be null");
+    }
+
+    @Test
     void shouldGetAllHolidaysForYear() {
         List<LocalDate> holidays2024 = holidayValidator.getHolidayDatesForYear(Year.of(2024));
         
@@ -66,6 +74,11 @@ class ColombianHolidayValidatorTest {
     void shouldIdentifyAllHolidays2024(Month month, int day, String description) {
         assertTrue(holidayValidator.isHoliday(LocalDate.of(2024, month, day)), 
                   String.format("%s should be a holiday", description));
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGetAllHolidayDatesForYear() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.getHolidayDatesForYear(null), "The date must not be null");
     }
 
     private static Stream<Arguments> provideHolidayDates2024() {
@@ -191,6 +204,137 @@ class ColombianHolidayValidatorTest {
             }
         });
     }
+
+    @Test
+    void shouldThrowExceptionWhenGetAllHolidaysForYear() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.getHolidaysForYear(null), "The date must not be null");
+    }
+
+    @Test
+    void shouldReturnNextHolidayDateWhenGivenADate() {
+        LocalDate today = LocalDate.of(2024, Month.JANUARY, 5); // A regular Friday
+        Optional<LocalDate> nextHoliday = holidayValidator.getNextHolidayDate(today);
+
+        assertTrue(nextHoliday.isPresent(), "There should be a next holiday after January 5th");
+        assertEquals(LocalDate.of(2024, Month.JANUARY, 8), nextHoliday.get(), "Next holiday should be January 8th (Epiphany transferred)");
+
+        today = LocalDate.of(2024, Month.MARCH, 29); // Good Friday
+        nextHoliday = holidayValidator.getNextHolidayDate(today);
+
+        assertTrue(nextHoliday.isPresent(), "There should be a next holiday after March 29th");
+        assertEquals(LocalDate.of(2024, Month.MAY, 1), nextHoliday.get(), "Next holiday should be May 1st (Labor Day)");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoNextHolidayExists() {
+        LocalDate lastDayOf2024 = LocalDate.of(2024, Month.DECEMBER, 31);
+        Optional<LocalDate> nextHoliday = holidayValidator.getNextHolidayDate(lastDayOf2024);
+
+        assertFalse(nextHoliday.isPresent(), "There should be no next holiday after December 31st of 2024");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGetNextHolidayDateCalledWithNull() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.getNextHolidayDate(null), "The date must not be null");
+    }
+
+    @Test
+    void shouldReturnNextHolidayWhenGivenADate() {
+        LocalDate today = LocalDate.of(2024, Month.JANUARY, 5); // A regular Friday
+        Optional<ColombianHoliday> nextHoliday = holidayValidator.getNextHoliday(today);
+
+        assertTrue(nextHoliday.isPresent(), "There should be a next holiday after January 5th");
+        assertEquals("Día de los Reyes Magos", nextHoliday.get().getName(), "Next holiday should be Epiphany (January 8th)");
+
+        today = LocalDate.of(2024, Month.MARCH, 29); // Good Friday
+        nextHoliday = holidayValidator.getNextHoliday(today);
+
+        assertTrue(nextHoliday.isPresent(), "There should be a next holiday after March 29th");
+        assertEquals("Día del Trabajo", nextHoliday.get().getName(), "Next holiday should be May 1st (Labor Day)");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoNextHolidayExistsForHoliday() {
+        LocalDate lastDayOf2024 = LocalDate.of(2024, Month.DECEMBER, 31);
+        Optional<ColombianHoliday> nextHoliday = holidayValidator.getNextHoliday(lastDayOf2024);
+
+        assertFalse(nextHoliday.isPresent(), "There should be no next holiday after December 31st of 2024");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGetNextHolidayCalledWithNull() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.getNextHoliday(null), "The date must not be null");
+    }
+
+    @Test
+    void shouldReturnPreviousHolidayDateWhenGivenADate() {
+        LocalDate today = LocalDate.of(2024, Month.JANUARY, 5); // A regular Friday
+        Optional<LocalDate> previousHoliday = holidayValidator.getPreviousHolidayDate(today);
+
+        assertTrue(previousHoliday.isPresent(), "There should be a previous holiday before January 5th");
+        assertEquals(LocalDate.of(2024, Month.JANUARY, 1), previousHoliday.get(), "Previous holiday should be January 1st (New Year's Day)");
+
+        today = LocalDate.of(2024, Month.MAY, 3); // A Friday after Labor Day
+        previousHoliday = holidayValidator.getPreviousHolidayDate(today);
+
+        assertTrue(previousHoliday.isPresent(), "There should be a previous holiday before May 3rd");
+        assertEquals(LocalDate.of(2024, Month.MAY, 1), previousHoliday.get(), "Previous holiday should be May 1st (Labor Day)");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoPreviousHolidayExists() {
+        LocalDate firstDayOf2024 = LocalDate.of(2024, Month.JANUARY, 1);
+        Optional<LocalDate> previousHoliday = holidayValidator.getPreviousHolidayDate(firstDayOf2024);
+
+        assertFalse(previousHoliday.isPresent(), "There should be no previous holiday before January 1st of 2024");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGetPreviousHolidayDateCalledWithNull() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.getPreviousHolidayDate(null), "The date must not be null");
+    }
+
+    @Test
+    void shouldReturnPreviousHolidayWhenGivenADate() {
+        LocalDate today = LocalDate.of(2024, Month.JANUARY, 5); // A regular Friday
+        Optional<ColombianHoliday> previousHoliday = holidayValidator.getPreviousHoliday(today);
+
+        assertTrue(previousHoliday.isPresent(), "There should be a previous holiday before January 5th");
+        assertEquals("Año Nuevo", previousHoliday.get().getName(), "Previous holiday should be January 1st (New Year's Day)");
+
+        today = LocalDate.of(2024, Month.MAY, 3); // A Friday after Labor Day
+        previousHoliday = holidayValidator.getPreviousHoliday(today);
+
+        assertTrue(previousHoliday.isPresent(), "There should be a previous holiday before May 3rd");
+        assertEquals("Día del Trabajo", previousHoliday.get().getName(), "Previous holiday should be May 1st (Labor Day)");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoPreviousHolidayExistsForHoliday() {
+        LocalDate firstDayOf2024 = LocalDate.of(2024, Month.JANUARY, 1);
+        Optional<ColombianHoliday> previousHoliday = holidayValidator.getPreviousHoliday(firstDayOf2024);
+
+        assertFalse(previousHoliday.isPresent(), "There should be no previous holiday before January 1st of 2024");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGetPreviousHolidayCalledWithNull() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.getPreviousHoliday(null), "The date must not be null");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenIsLongWeekendCalledWithNull() {
+        assertThrows(IllegalArgumentException.class, () -> holidayValidator.isLongWeekend(null), "The date must not be null");
+    }
+
+    @Test
+    void testIsLongWeekendWhenMondayIsHoliday() {
+
+        LocalDate weekendDate = LocalDate.of(2024, 10, 10);
+        
+        assertTrue(holidayValidator.isLongWeekend(weekendDate), "The next Monday is a holiday, so it should be a long weekend.");
+    }
+
 
     // Helper method to find a holiday by date
     private ColombianHoliday findHolidayByDate(List<ColombianHoliday> holidays, LocalDate date) {

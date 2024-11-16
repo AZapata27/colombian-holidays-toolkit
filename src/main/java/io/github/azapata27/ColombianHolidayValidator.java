@@ -11,7 +11,9 @@ import java.time.LocalDate;
 import java.time.Year;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Implementation of Colombian holidays according to Law 51 of 1983 and Colombian official calendar.
@@ -43,13 +45,17 @@ import java.util.List;
  *
  * <p><b>Usage examples:</b></p>
  * <pre>{@code
- * HolidayValidator validator = new ColombianHolidayValidator();
+ * HolidayValidator<ColombianHoliday> validator = new ColombianHolidayValidator();
+ * ColombianHolidayValidator validator = new ColombianHolidayValidator();
  *
  * // Check if a specific date is a holiday
  * boolean isHoliday = validator.isHoliday(LocalDate.now());
  *
  * // Get all holidays for year 2024
  * List<LocalDate> holidays2024 = validator.getHolidaysForYear(Year.of(2024));
+ * List<ColombianHoliday> holidays2024 = validator.getHolidaysForYear(Year.of(2024));
+ *
+ *
  * }</pre>
  *
  * @see HolidayValidator
@@ -81,13 +87,21 @@ public class ColombianHolidayValidator implements HolidayValidator<ColombianHoli
 
     /**
      * Determines if a given date is a Colombian holiday.
-     * Checks against all types of holidays (fixed, easter-based, and transferable).
+     * <p>
+     * This method checks whether the specified date is a holiday in Colombia. It considers
+     * all types of holidays, including fixed holidays (e.g., January 1st), Easter-based
+     * holidays (e.g., Good Friday), and transferable holidays (e.g., some holidays that
+     * are moved to the nearest Monday).
      *
-     * @param date the date to check
-     * @return true if the date is a holiday, false otherwise
+     * @param date the {@link LocalDate} to check; must not be null
+     * @return {@code true} if the specified date is a holiday, {@code false} otherwise
+     * @throws IllegalArgumentException if the {@code date} is {@code null}
      */
     @Override
     public boolean isHoliday(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
         return getHolidayDatesForYear(Year.of(date.getYear())).contains(date);
     }
 
@@ -102,10 +116,16 @@ public class ColombianHolidayValidator implements HolidayValidator<ColombianHoli
      *
      * @param year the year to get holidays for
      * @return a list of LocalDate objects representing all holidays in the specified year
+     * @throws IllegalArgumentException if the {@code year} is {@code null}
      * @see EasterCalculator#calculateEasterSunday(int)
      */
     @Override
     public List<LocalDate> getHolidayDatesForYear(Year year) {
+
+        if (year == null) {
+            throw new IllegalArgumentException("The year must not be null");
+        }
+
         List<LocalDate> holidays = new ArrayList<>();
 
         for (ColombianHoliday holiday : fixedHolidays) {
@@ -122,6 +142,9 @@ public class ColombianHolidayValidator implements HolidayValidator<ColombianHoli
             LocalDate baseDate = LocalDate.of(year.getValue(), holiday.getMonth(), holiday.getDay());
             holidays.add(adjustToNextMonday(baseDate));
         }
+
+        // Sort holidays by date in ascending order
+        holidays.sort(Comparator.naturalOrder());
 
         return holidays;
     }
@@ -146,12 +169,18 @@ public class ColombianHolidayValidator implements HolidayValidator<ColombianHoli
      *
      * @param year the year to get holidays for
      * @return a list of Holiday objects with complete holiday information for the specified year
+     * @throws IllegalArgumentException if the {@code year} is {@code null}
      * @see Holiday
      * @see ColombianHoliday
      * @see EasterCalculator#calculateEasterSunday(int)
      */
     @Override
     public List<ColombianHoliday> getHolidaysForYear(Year year) {
+
+        if (year == null) {
+            throw new IllegalArgumentException("The year must not be null");
+        }
+
         List<ColombianHoliday> holidays = new ArrayList<>();
 
         for (ColombianHoliday holiday : fixedHolidays) {
@@ -184,7 +213,62 @@ public class ColombianHolidayValidator implements HolidayValidator<ColombianHoli
                     .build());
         }
 
+        // Sort holidays by date in ascending order
+        holidays.sort(Comparator.naturalOrder());
+
         return holidays;
+    }
+
+    @Override
+    public Optional<LocalDate> getNextHolidayDate(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return getHolidayDatesForYear(Year.of(date.getYear())).stream()
+                .filter(holidayDate -> holidayDate.isAfter(date))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<ColombianHoliday> getNextHoliday(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return getHolidaysForYear(Year.of(date.getYear())).stream()
+                .filter(holiday -> holiday.getDate().isAfter(date))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<LocalDate> getPreviousHolidayDate(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return getHolidayDatesForYear(Year.of(date.getYear())).stream()
+                .filter(holidayDate -> holidayDate.isBefore(date))
+                .reduce((first, second) -> second); // Get the last before date
+    }
+
+    @Override
+    public Optional<ColombianHoliday> getPreviousHoliday(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+        return getHolidaysForYear(Year.of(date.getYear())).stream()
+                .filter(holiday -> holiday.getDate().isBefore(date))
+                .reduce((first, second) -> second); // Get the last before holiday
+    }
+
+    @Override
+    public boolean isLongWeekend(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("The date must not be null");
+        }
+
+        // Get de next Monday form a date
+        LocalDate nextMonday = date.with(TemporalAdjusters.next(DayOfWeek.MONDAY));
+
+        return isHoliday(nextMonday);
     }
 
     /**

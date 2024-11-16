@@ -3,8 +3,9 @@ package io.github.azapata27.model;
 import io.github.azapata27.enums.HolidayType;
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.Objects;
 
-public abstract class Holiday {
+public abstract class Holiday implements Comparable<Holiday> {
     private final String name;
     private final Month month;
     private final int day;
@@ -27,6 +28,24 @@ public abstract class Holiday {
 
     public boolean isTransferable() {
         return type == HolidayType.TRANSFERABLE;
+    }
+
+    @Override
+    public int compareTo(Holiday other) {
+        return this.date.compareTo(other.date);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Holiday otherHoliday = (Holiday) obj;
+        return Objects.equals(date, otherHoliday.date);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(date);
     }
 
     public abstract static class Builder<T extends Builder<T>> {
