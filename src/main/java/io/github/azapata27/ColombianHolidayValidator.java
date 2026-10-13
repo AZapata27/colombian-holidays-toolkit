@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of Colombian holidays according to Law 51 of 1983 and Colombian official calendar.
@@ -115,7 +116,7 @@ public class ColombianHolidayValidator implements HolidayValidator<ColombianHoli
      * </ul>
      *
      * @param year the year to get holidays for
-     * @return a list of LocalDate objects representing all holidays in the specified year
+     * @return a sorted list of distinct LocalDate objects representing all holiday dates in the specified year
      * @throws IllegalArgumentException if the {@code year} is {@code null}
      * @see EasterCalculator#calculateEasterSunday(int)
      */
@@ -143,10 +144,13 @@ public class ColombianHolidayValidator implements HolidayValidator<ColombianHoli
             holidays.add(adjustToNextMonday(baseDate));
         }
 
-        // Sort holidays by date in ascending order
-        holidays.sort(Comparator.naturalOrder());
-
-        return holidays;
+        // Sort holidays by date in ascending order. Two holidays can fall on the same day after being
+        // moved to Monday (e.g. San Pedro y San Pablo and Sagrado Corazón on 2025-06-30), so the
+        // dates are de-duplicated: each calendar day appears only once.
+        return holidays.stream()
+                .distinct()
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
     }
 
 
