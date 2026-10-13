@@ -40,7 +40,7 @@ mavenPublishing {
         signAllPublications()
     }
 
-    coordinates(project.group.toString(), 'colombian-holiday-toolkit', project.version.toString())
+    coordinates(project.group.toString(), 'colombian-holidays-toolkit', project.version.toString())
 
     pom {
         name = 'Colombian Holiday Toolkit'

@@ -5,7 +5,7 @@
   "bump-minor-pre-major": true,
   "packages": {
     ".": {
-      "package-name": "colombian-holiday-toolkit",
+      "package-name": "colombian-holidays-toolkit",
       "initial-version": "0.1.0",
       "changelog-path": "CHANGELOG.md",
       "extra-files": ["README.md"]
