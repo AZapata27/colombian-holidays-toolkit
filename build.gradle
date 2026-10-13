@@ -1,9 +1,15 @@
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
+
 plugins {
-    id 'java'
+    id 'java-library'
+    // 0.34.0 is the newest release that supports Gradle 8.x (0.35+ needs Gradle 8.13 / 9.0).
+    id 'com.vanniktech.maven.publish' version '0.34.0'
 }
 
 group = 'io.github.azapata27'
-version = '1.0-SNAPSHOT'
+// Managed by release-please: the release PR bumps version.txt (release-type "simple").
+version = file('version.txt').text.trim()
 
 repositories {
     mavenCentral()
@@ -18,4 +24,52 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+mavenPublishing {
+    // Maven Central requires sources and javadoc jars next to the main jar.
+    configure(new JavaLibrary(new JavadocJar.Javadoc(), true))
+
+    // Sonatype Central Portal. Credentials come from the mavenCentralUsername / mavenCentralPassword
+    // Gradle properties (ORG_GRADLE_PROJECT_* environment variables in CI).
+    publishToMavenCentral()
+
+    // Sign only when a key is provided (release job), so local builds and publishToMavenLocal
+    // keep working without GPG. Key: signingInMemoryKey / signingInMemoryKeyPassword.
+    if (providers.gradleProperty('signingInMemoryKey').isPresent()) {
+        signAllPublications()
+    }
+
+    coordinates(project.group.toString(), 'colombian-holiday-toolkit', project.version.toString())
+
+    pom {
+        name = 'Colombian Holiday Toolkit'
+        description = 'Java library to work with Colombian public holidays: holiday checks, next/previous ' +
+                'holiday, counts per month/year and long weekends (Ley Emiliani).'
+        inceptionYear = '2024'
+        url = 'https://github.com/AZapata27/colombian-holidays-toolkit'
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'repo'
+            }
+        }
+        developers {
+            developer {
+                id = 'AZapata27'
+                name = 'Andres Zapata'
+                url = 'https://github.com/AZapata27'
+            }
+        }
+        scm {
+            url = 'https://github.com/AZapata27/colombian-holidays-toolkit'
+            connection = 'scm:git:https://github.com/AZapata27/colombian-holidays-toolkit.git'
+            developerConnection = 'scm:git:ssh://git@github.com/AZapata27/colombian-holidays-toolkit.git'
+        }
+        issueManagement {
+            system = 'GitHub'
+            url = 'https://github.com/AZapata27/colombian-holidays-toolkit/issues'
+        }
+    }
 }

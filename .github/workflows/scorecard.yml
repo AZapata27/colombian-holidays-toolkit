@@ -1,0 +1,57 @@
+# OpenSSF Scorecard (https://github.com/ossf/scorecard-action). Results are published to
+# api.scorecard.dev (badge in the README) and uploaded to code scanning.
+#
+# publish_results: true imposes restrictions on this workflow (scorecard-action README,
+# "Workflow Restrictions"): no top-level env/defaults, no workflow-level write permissions, and the
+# job may only use harden-runner, checkout, scorecard-action, upload-artifact and
+# codeql-action/upload-sarif, with no job-level env/defaults, containers or services.
+name: Scorecard
+
+on:
+  branch_protection_rule:          # re-evaluate Branch-Protection when the rules change
+  schedule:
+    - cron: '41 6 * * 1'           # weekly, Monday 06:41 UTC
+  push:
+    branches: [master]
+
+permissions: {}
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write       # upload the SARIF to code scanning
+      id-token: write              # publish results (OIDC) for the badge / REST API
+      contents: read               # read the repository
+      actions: read                # read workflow runs (Dangerous-Workflow, CI checks)
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard
+        uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to code scanning
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        with:
+          sarif_file: results.sarif
