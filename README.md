@@ -40,7 +40,7 @@ flowchart LR
 
 ## Installation
 
-Coordinates: `io.github.azapata27:colombian-holiday-toolkit`. Releases are published to Maven
+Coordinates: `io.github.azapata27:colombian-holidays-toolkit`. Releases are published to Maven
 Central once the publishing credentials are configured (see [Releasing](#releasing)); until then,
 download the jars attached to the [GitHub Releases](https://github.com/AZapata27/colombian-holidays-toolkit/releases)
 or run `./gradlew publishToMavenLocal`.
@@ -51,7 +51,7 @@ Gradle (Kotlin DSL, `build.gradle.kts`):
 
 ```kotlin
 dependencies {
-    implementation("io.github.azapata27:colombian-holiday-toolkit:0.1.0")
+    implementation("io.github.azapata27:colombian-holidays-toolkit:0.1.0")
 }
 ```
 
@@ -59,7 +59,7 @@ Gradle (Groovy DSL, `build.gradle`):
 
 ```groovy
 dependencies {
-    implementation 'io.github.azapata27:colombian-holiday-toolkit:0.1.0'
+    implementation 'io.github.azapata27:colombian-holidays-toolkit:0.1.0'
 }
 ```
 
@@ -68,7 +68,7 @@ Maven (`pom.xml`):
 ```xml
 <dependency>
     <groupId>io.github.azapata27</groupId>
-    <artifactId>colombian-holiday-toolkit</artifactId>
+    <artifactId>colombian-holidays-toolkit</artifactId>
     <version>0.1.0</version>
 </dependency>
 ```
