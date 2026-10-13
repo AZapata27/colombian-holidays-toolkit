@@ -1,0 +1,133 @@
+# Releases with release-please (AZapata27/reusable-workflows release.yml):
+#   - every push to master updates the release PR (version.txt, CHANGELOG.md, README.md);
+#   - merging the release PR creates the tag + GitHub Release, attaches the jars with a
+#     build provenance attestation and, when the Maven Central secrets exist, publishes to
+#     Maven Central.
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build jars
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK and Gradle
+        uses: AZapata27/reusable-workflows/actions/setup-jvm@dd1bf38000c4f44c4939abe2ce0da8e1fac11993 # v1.0.0
+        with:
+          java-version: '21'
+          build-tool: gradle
+
+      # plainJavadocJar comes from com.vanniktech.maven.publish (javadoc jar required by Maven Central).
+      - name: Build main, sources and javadoc jars
+        run: ./gradlew build plainJavadocJar --no-daemon
+
+      - name: Upload jars
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Release
+    needs: package
+    uses: AZapata27/reusable-workflows/.github/workflows/release.yml@dd1bf38000c4f44c4939abe2ce0da8e1fac11993 # v1.0.0
+    permissions:
+      contents: write              # tags, releases, release assets
+      issues: write                # release-please labels
+      pull-requests: write         # release PR
+      id-token: write              # provenance signing (Sigstore OIDC)
+      attestations: write          # store the attestation
+    with:
+      config-file: release-please-config.json
+      manifest-file: .release-please-manifest.json
+      artifact-name: dist
+      artifact-subject-path: '*.jar'
+    secrets:
+      # Optional PAT / GitHub App token so the release PR triggers CI (required checks).
+      # When the secret does not exist the reusable workflow falls back to GITHUB_TOKEN.
+      release-token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+  maven-central-gate:
+    name: Maven Central secrets present?
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check secrets
+        id: check
+        env:
+          # Only booleans reach the step; the secret values are never exposed here.
+          HAS_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME != '' }}
+          HAS_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD != '' }}
+          HAS_SIGNING_KEY: ${{ secrets.SIGNING_KEY != '' }}
+          HAS_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD != '' }}
+        run: |
+          if [ "${HAS_USERNAME}" = "true" ] && [ "${HAS_PASSWORD}" = "true" ] \
+            && [ "${HAS_SIGNING_KEY}" = "true" ] && [ "${HAS_SIGNING_PASSWORD}" = "true" ]; then
+            echo "enabled=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "enabled=false" >> "${GITHUB_OUTPUT}"
+            echo "::notice title=Maven Central::Skipping publication: MAVEN_CENTRAL_USERNAME, MAVEN_CENTRAL_PASSWORD, SIGNING_KEY and SIGNING_PASSWORD must all be set."
+          fi
+
+  maven-central:
+    name: Publish to Maven Central
+    needs: [release, maven-central-gate]
+    if: needs.maven-central-gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK and Gradle
+        uses: AZapata27/reusable-workflows/actions/setup-jvm@dd1bf38000c4f44c4939abe2ce0da8e1fac11993 # v1.0.0
+        with:
+          java-version: '21'
+          build-tool: gradle
+          gradle-cache-provider: external   # no cache restore in the publishing job
+
+      - name: Publish and release to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+        run: ./gradlew publishAndReleaseToMavenCentral --no-daemon --no-configuration-cache
